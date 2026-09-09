@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Administrativo | Portfólio</title>
+    <!-- Importa o CSS com os estilos de login -->
+    <link rel="stylesheet" href="{{ url_for('static', path='css/styles.css') }}">
+</head>
+<body class="login-page">
+
+    <main class="login-wrapper">
+        <div class="login-card">
+            <div class="login-header">
+                <a href="/" class="logo">&lt;IgorOliveira /&gt;</a>
+                <h1>Painel Admin</h1>
+                <p>Identifique-se para gerenciar o portfólio</p>
+            </div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <input type="email" id="email" placeholder="Seu E-mail" required autocomplete="username">
+                </div>
+
+                <div class="form-group">
+                    <input type="password" id="password" placeholder="Sua Senha" required autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" id="btn-login">
+                    Entrar no Painel
+                </button>
+
+                <p id="login-feedback" class="feedback-msg" style="margin-top: 1rem; text-align: center; font-size: 0.9rem;"></p>
+            </form>
+
+            <a href="/" class="back-link">← Voltar para o site público</a>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Se já houver um token salvo, vai direto pro Dashboard
+            if (localStorage.getItem("admin_token")) {
+                window.location.href = "/admin/dashboard";
+                return;
+            }
+
+            const loginForm = document.getElementById("login-form");
+            const feedbackMsg = document.getElementById("login-feedback");
+            const btnLogin = document.getElementById("btn-login");
+
+            loginForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                btnLogin.disabled = true;
+                btnLogin.innerText = "Autenticando...";
+                feedbackMsg.innerText = "";
+
+                const email = document.getElementById("email").value;
+                const password = document.getElementById("password").value;
+
+                // Formato OAuth2 (x-www-form-urlencoded) esperado pelo FastAPI
+                const bodyParams = new URLSearchParams();
+                bodyParams.append("username", email);
+                bodyParams.append("password", password);
+
+                try {
+                    const response = await fetch("/api/auth/login", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded",
+                        },
+                        body: bodyParams.toString()
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        localStorage.setItem("admin_token", data.access_token);
+                        localStorage.setItem("token_type", data.token_type);
+
+                        feedbackMsg.style.color = "var(--success)";
+                        feedbackMsg.innerText = "Login realizado! Redirecionando...";
+
+                        setTimeout(() => {
+                            window.location.href = "/admin/dashboard";
+                        }, 800);
+
+                    } else {
+                        feedbackMsg.style.color = "var(--error)";
+                        feedbackMsg.innerText = data.detail || "Credenciais inválidas.";
+                    }
+                } catch (error) {
+                    feedbackMsg.style.color = "var(--error)";
+                    feedbackMsg.innerText = "Erro de conexão com o servidor.";
+                } finally {
+                    btnLogin.disabled = false;
+                    btnLogin.innerText = "Entrar no Painel";
+                }
+            });
+        });
+    </script>
+</body>
+</html>

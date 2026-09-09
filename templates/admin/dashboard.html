@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Controle | Admin</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .dashboard-header {
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tabs-nav {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            border-radius: var(--radius-sm);
+        }
+
+        .tab-btn.active {
+            color: var(--accent);
+            background-color: rgba(56, 189, 248, 0.1);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Tabelas */
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            margin-top: 1rem;
+        }
+
+        .admin-table th, .admin-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        .admin-table th {
+            background-color: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.6rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-unread { background-color: rgba(239, 68, 68, 0.2); color: var(--error); }
+        .badge-read { background-color: rgba(16, 185, 129, 0.2); color: var(--success); }
+
+        /* Modal styling */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.open { display: flex; }
+
+        .modal-content {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            width: 100%;
+            max-width: 550px;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .action-btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            margin-right: 0.3rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header do Dashboard -->
+    <header class="dashboard-header">
+        <div class="container header-content">
+            <a href="/" class="logo">&lt;IgorOliveira / Dashboard&gt;</a>
+            <button id="btn-logout" class="btn btn-secondary">Sair do Painel</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Navegação por Abas -->
+        <div class="tabs-nav">
+            <button class="tab-btn active" onclick="switchTab('projects-tab')">🚀 Projetos</button>
+            <button class="tab-btn" onclick="switchTab('messages-tab')">📩 Mensagens de Contato</button>
+        </div>
+
+        <!-- Aba 1: Projetos -->
+        <section id="projects-tab" class="tab-content active">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Gerenciamento de Projetos</h2>
+                <button class="btn btn-primary" onclick="openProjectModal()">+ Novo Projeto</button>
+            </div>
+
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Tecnologias</th>
+                        <th>Destaque</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="projects-list">
+                    <!-- Preenchido dinamicamente pelo JS -->
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Aba 2: Mensagens de Contato -->
+        <section id="messages-tab" class="tab-content">
+            <h2>Mensagens Recebidas</h2>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Nome / Email</th>
+                        <th>Assunto / Mensagem</th>
+                        <th>Data</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="messages-list">
+                    <!-- Preenchido dinamicamente pelo JS -->
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <!-- Modal para Cadastrar/Editar Projetos -->
+    <div id="project-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Novo Projeto</h3>
+                <button style="background:none; border:none; color:var(--text-primary); cursor:pointer;" onclick="closeProjectModal()">✕</button>
+            </div>
+            <form id="project-form">
+                <input type="hidden" id="proj-id">
+                <div class="form-group">
+                    <input type="text" id="proj-title" placeholder="Título do Projeto" required>
+                </div>
+                <div class="form-group">
+                    <textarea id="proj-description" rows="3" placeholder="Descrição curta" required></textarea>
+                </div>
+                <div class="form-group">
+                    <input type="text" id="proj-tech" placeholder="Tecnologias (ex: FastAPI, SQLite, Docker)" required>
+                </div>
+                <div class="form-group">
+                    <input type="url" id="proj-github" placeholder="URL do GitHub">
+                </div>
+                <div class="form-group">
+                    <input type="url" id="proj-demo" placeholder="URL da Demonstração">
+                </div>
+                <div class="form-group">
+                    <label style="color: var(--text-secondary); font-size: 0.9rem;">
+                        <input type="checkbox" id="proj-featured"> Marcar como Destaque na Home
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Salvar Projeto</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const TOKEN = localStorage.getItem("admin_token");
+
+        // 1. Guard de Autenticação
+        if (!TOKEN) {
+            window.location.href = "/admin/login";
+        }
+
+        document.getElementById("btn-logout").addEventListener("click", () => {
+            localStorage.removeItem("admin_token");
+            localStorage.removeItem("token_type");
+            window.location.href = "/admin/login";
+        });
+
+        // 2. Troca de Abas
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabId === 'projects-tab') loadProjects();
+            if (tabId === 'messages-tab') loadMessages();
+        }
+
+        // 3. Carregar e Gerenciar Projetos
+        async function loadProjects() {
+            const res = await fetch('/api/projects/');
+            const projects = await res.json();
+            const tbody = document.getElementById('projects-list');
+            
+            tbody.innerHTML = projects.map(p => `
+                <tr>
+                    <td><strong>${p.title}</strong></td>
+                    <td>${p.tech_stack}</td>
+                    <td>${p.is_featured ? '⭐ Sim' : 'Não'}</td>
+                    <td>
+                        <button class="btn btn-secondary action-btn-sm" onclick="editProject(${p.id})">Editar</button>
+                        <button class="btn btn-primary action-btn-sm" style="background-color: var(--error);" onclick="deleteProject(${p.id})">Excluir</button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="4">Nenhum projeto cadastrado.</td></tr>';
+        }
+
+        async function deleteProject(id) {
+            if (!confirm("Deseja realmente remover este projeto?")) return;
+            
+            const res = await fetch(`/api/projects/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${TOKEN}` }
+            });
+
+            if (res.ok) loadProjects();
+            else alert("Erro ao excluir projeto.");
+        }
+
+        // 4. Modal de Novo/Editar Projeto
+        function openProjectModal() {
+            document.getElementById('project-form').reset();
+            document.getElementById('proj-id').value = '';
+            document.getElementById('modal-title').innerText = 'Novo Projeto';
+            document.getElementById('project-modal').classList.add('open');
+        }
+
+        function closeProjectModal() {
+            document.getElementById('project-modal').classList.remove('open');
+        }
+
+        async function editProject(id) {
+            const res = await fetch(`/api/projects/${id}`);
+            const p = await res.json();
+
+            document.getElementById('proj-id').value = p.id;
+            document.getElementById('proj-title').value = p.title;
+            document.getElementById('proj-description').value = p.description;
+            document.getElementById('proj-tech').value = p.tech_stack;
+            document.getElementById('proj-github').value = p.github_url || '';
+            document.getElementById('proj-demo').value = p.demo_url || '';
+            document.getElementById('proj-featured').checked = p.is_featured;
+
+            document.getElementById('modal-title').innerText = 'Editar Projeto';
+            document.getElementById('project-modal').classList.add('open');
+        }
+
+        document.getElementById('project-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('proj-id').value;
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `/api/projects/${id}` : '/api/projects/';
+
+            const payload = {
+                title: document.getElementById('proj-title').value,
+                description: document.getElementById('proj-description').value,
+                tech_stack: document.getElementById('proj-tech').value,
+                github_url: document.getElementById('proj-github').value || null,
+                demo_url: document.getElementById('proj-demo').value || null,
+                is_featured: document.getElementById('proj-featured').checked
+            };
+
+            const res = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${TOKEN}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                closeProjectModal();
+                loadProjects();
+            } else {
+                alert("Erro ao salvar o projeto.");
+            }
+        });
+
+        // 5. Carregar e Gerenciar Mensagens
+        async function loadMessages() {
+            const res = await fetch('/api/contact/', {
+                headers: { 'Authorization': `Bearer ${TOKEN}` }
+            });
+            
+            if (!res.ok) {
+                alert("Sessão expirada. Faça login novamente.");
+                window.location.href = "/admin/login";
+                return;
+            }
+
+            const messages = await res.json();
+            const tbody = document.getElementById('messages-list');
+
+            tbody.innerHTML = messages.map(m => `
+                <tr>
+                    <td>
+                        <span class="status-badge ${m.is_read ? 'badge-read' : 'badge-unread'}">
+                            ${m.is_read ? 'Lida' : 'Não Lida'}
+                        </span>
+                    </td>
+                    <td><strong>${m.name}</strong><br><small>${m.email}</small></td>
+                    <td><strong>${m.subject}</strong><br><small>${m.message}</small></td>
+                    <td><small>${new Date(m.created_at).toLocaleDateString('pt-BR')}</small></td>
+                    <td>
+                        <button class="btn btn-secondary action-btn-sm" onclick="toggleRead(${m.id}, ${!m.is_read})">
+                            ${m.is_read ? 'Marcar não lida' : 'Marcar como lida'}
+                        </button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="5">Nenhuma mensagem recebida.</td></tr>';
+        }
+
+        async function toggleRead(id, isRead) {
+            await fetch(`/api/contact/${id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${TOKEN}`
+                },
+                body: JSON.stringify({ is_read: isRead })
+            });
+            loadMessages();
+        }
+
+        // Inicialização
+        loadProjects();
+    </script>
+</body>
+</html>
