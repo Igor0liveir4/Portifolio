@@ -36,7 +36,8 @@ def home(request: Request, db: Session = Depends(get_db)):
     projects = db.query(Project).order_by(Project.created_at.desc()).all()
     
     return templates.TemplateResponse(
-        "index.html", 
+        request,
+        "index.html",
         {
             "request": request, 
             "projects": projects
@@ -48,7 +49,7 @@ def admin_login(request: Request):
     """
     Renderiza a tela de login do painel administrativo.
     """
-    return templates.TemplateResponse("admin/login.html", {"request": request})
+    return templates.TemplateResponse(request, "admin/login.html", {"request": request})
 
 @app.get("/admin/dashboard", summary="Painel de Controle")
 def admin_dashboard(request: Request):
@@ -56,4 +57,4 @@ def admin_dashboard(request: Request):
     Renderiza a interface do painel administrativo.
     (O controle de acesso JWT é feito no frontend via JavaScript/Local Storage).
     """
-    return templates.TemplateResponse("admin/dashboard.html", {"request": request})
+    return templates.TemplateResponse(request, "admin/dashboard.html", {"request": request})

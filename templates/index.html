@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Igor Oliveira | Desenvolvedor Backend</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+
+    <!-- Header / Navbar -->
+    <header class="navbar">
+        <div class="container nav-content">
+            <a href="#" class="logo">&lt;IgorOliveira /&gt;</a>
+            <nav>
+                <a href="#sobre">Sobre</a>
+                <a href="#projetos">Projetos</a>
+                <a href="#contato">Contato</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero container">
+        <div class="hero-text">
+            <h1>Olá, eu sou o <span>Igor Oliveira</span> 👋</h1>
+            <p>Desenvolvedor Backend focado em construir aplicações web robustas, APIs RESTful de alto desempenho e arquiteturas limpas com Python e FastAPI.</p>
+            <div class="hero-buttons">
+                <a href="#projetos" class="btn btn-primary">Ver Projetos</a>
+                <a href="#contato" class="btn btn-secondary">Entrar em Contato</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção de Projetos (Renderizado via Jinja2) -->
+    <section id="projetos" class="projects-section container">
+        <h2>Projetos em Destaque</h2>
+        <div class="projects-grid">
+            {% if projects %}
+                {% for project in projects %}
+                <div class="project-card">
+                    {% if project.image_url %}
+                    <img src="{{ project.image_url }}" alt="{{ project.title }}" class="project-img">
+                    {% endif %}
+                    <div class="project-info">
+                        <h3>{{ project.title }}</h3>
+                        <p>{{ project.description }}</p>
+                        <div class="tech-tags">
+                            {% for tech in project.tech_stack.split(',') %}
+                            <span class="tag">{{ tech.strip() }}</span>
+                            {% endfor %}
+                        </div>
+                        <div class="project-links">
+                            {% if project.github_url %}
+                            <a href="{{ project.github_url }}" target="_blank" class="link">GitHub</a>
+                            {% endif %}
+                            {% if project.demo_url %}
+                            <a href="{{ project.demo_url }}" target="_blank" class="link">Demonstração</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="no-projects">Nenhum projeto cadastrado no momento. Acesse o painel admin para adicionar!</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Seção de Contato -->
+    <section id="contato" class="contact-section container">
+        <h2>Entre em Contato</h2>
+        <form id="contact-form" class="contact-form">
+            <div class="form-group">
+                <input type="text" id="name" placeholder="Seu Nome" required>
+            </div>
+            <div class="form-group">
+                <input type="email" id="email" placeholder="Seu E-mail" required>
+            </div>
+            <div class="form-group">
+                <input type="text" id="subject" placeholder="Assunto" required>
+            </div>
+            <div class="form-group">
+                <textarea id="message" rows="5" placeholder="Sua Mensagem..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" id="btn-submit">Enviar Mensagem</button>
+            <p id="form-feedback" class="feedback-msg"></p>
+        </form>
+    </section>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
